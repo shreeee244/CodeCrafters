@@ -20,7 +20,7 @@ interface AuthContextType {
   logout: () => void
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const mockUser: User = {
   id: "driver-001",
@@ -34,7 +34,7 @@ const mockUser: User = {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+const [user, setUser] = useState<User | null>(mockUser)
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     // Simulate API call

@@ -8,75 +8,104 @@ import {
   MapPin,
   Trophy,
 } from "lucide-react"
-import { useMissionControl } from "@/lib/mission-control-context"
+import { useMissionControl, type Industry } from "@/lib/mission-control-context"
 
-const cities = [
+interface CityMetrics {
+  grip: number
+  dirtyAir: number
+  trackTemp: number
+  sectorTimes: number
+  fuelBurn: number
+}
+
+interface CityTrends {
+  grip: "up" | "down" | "stable"
+  dirtyAir: "up" | "down" | "stable"
+  trackTemp: "up" | "down" | "stable"
+  sectorTimes: "up" | "down" | "stable"
+  fuelBurn: "up" | "down" | "stable"
+}
+
+interface CityData {
+  id: string
+  name: string
+  circuit: string
+  fintech: { metrics: CityMetrics; trends: CityTrends }
+  healthtech: { metrics: CityMetrics; trends: CityTrends }
+  logistics: { metrics: CityMetrics; trends: CityTrends }
+}
+
+// City data mapped by BOTH city AND industry
+const citiesData: CityData[] = [
   {
     id: "bangalore",
     name: "Bangalore",
     circuit: "Electronic City GP",
-    rank: 2,
-    metrics: {
-      grip: 85,
-      dirtyAir: 42,
-      trackTemp: 67,
-      sectorTimes: 78,
-      fuelBurn: 34,
+    fintech: {
+      metrics: { grip: 85, dirtyAir: 42, trackTemp: 67, sectorTimes: 78, fuelBurn: 34 },
+      trends: { grip: "up", dirtyAir: "down", trackTemp: "stable", sectorTimes: "up", fuelBurn: "down" },
     },
-    trends: {
-      grip: "up" as const,
-      dirtyAir: "down" as const,
-      trackTemp: "stable" as const,
-      sectorTimes: "up" as const,
-      fuelBurn: "down" as const,
+    healthtech: {
+      metrics: { grip: 72, dirtyAir: 55, trackTemp: 78, sectorTimes: 68, fuelBurn: 45 },
+      trends: { grip: "stable", dirtyAir: "up", trackTemp: "up", sectorTimes: "up", fuelBurn: "stable" },
     },
-    overallScore: 82,
+    logistics: {
+      metrics: { grip: 88, dirtyAir: 38, trackTemp: 72, sectorTimes: 82, fuelBurn: 41 },
+      trends: { grip: "up", dirtyAir: "stable", trackTemp: "down", sectorTimes: "up", fuelBurn: "down" },
+    },
   },
   {
     id: "mumbai",
     name: "Mumbai",
     circuit: "Marine Drive Circuit",
-    rank: 3,
-    metrics: {
-      grip: 72,
-      dirtyAir: 68,
-      trackTemp: 82,
-      sectorTimes: 65,
-      fuelBurn: 56,
+    fintech: {
+      metrics: { grip: 72, dirtyAir: 68, trackTemp: 82, sectorTimes: 65, fuelBurn: 56 },
+      trends: { grip: "stable", dirtyAir: "up", trackTemp: "up", sectorTimes: "down", fuelBurn: "up" },
     },
-    trends: {
-      grip: "stable" as const,
-      dirtyAir: "up" as const,
-      trackTemp: "up" as const,
-      sectorTimes: "down" as const,
-      fuelBurn: "up" as const,
+    healthtech: {
+      metrics: { grip: 78, dirtyAir: 62, trackTemp: 75, sectorTimes: 71, fuelBurn: 52 },
+      trends: { grip: "up", dirtyAir: "stable", trackTemp: "stable", sectorTimes: "up", fuelBurn: "stable" },
     },
-    overallScore: 68,
+    logistics: {
+      metrics: { grip: 65, dirtyAir: 75, trackTemp: 88, sectorTimes: 58, fuelBurn: 68 },
+      trends: { grip: "down", dirtyAir: "up", trackTemp: "up", sectorTimes: "down", fuelBurn: "up" },
+    },
   },
   {
     id: "chennai",
     name: "Chennai",
     circuit: "Marina Beach Track",
-    rank: 1,
-    metrics: {
-      grip: 91,
-      dirtyAir: 35,
-      trackTemp: 75,
-      sectorTimes: 88,
-      fuelBurn: 28,
+    fintech: {
+      metrics: { grip: 91, dirtyAir: 35, trackTemp: 75, sectorTimes: 88, fuelBurn: 28 },
+      trends: { grip: "up", dirtyAir: "stable", trackTemp: "down", sectorTimes: "up", fuelBurn: "down" },
     },
-    trends: {
-      grip: "up" as const,
-      dirtyAir: "stable" as const,
-      trackTemp: "down" as const,
-      sectorTimes: "up" as const,
-      fuelBurn: "down" as const,
+    healthtech: {
+      metrics: { grip: 85, dirtyAir: 40, trackTemp: 82, sectorTimes: 79, fuelBurn: 38 },
+      trends: { grip: "up", dirtyAir: "down", trackTemp: "stable", sectorTimes: "up", fuelBurn: "down" },
     },
-    overallScore: 89,
+    logistics: {
+      metrics: { grip: 94, dirtyAir: 28, trackTemp: 70, sectorTimes: 91, fuelBurn: 25 },
+      trends: { grip: "up", dirtyAir: "down", trackTemp: "stable", sectorTimes: "up", fuelBurn: "down" },
+    },
   },
 ]
 
 const metricKeys = ["grip", "dirtyAir", "trackTemp", "sectorTimes", "fuelBurn"] as const
+
+function getIndustryKey(industry: Industry): "fintech" | "healthtech" | "logistics" {
+  const map: Record<Industry, "fintech" | "healthtech" | "logistics"> = {
+    FinTech: "fintech",
+    HealthTech: "healthtech",
+    Logistics: "logistics",
+  }
+  return map[industry]
+}
+
+function calculateOverallScore(metrics: CityMetrics): number {
+  return Math.round(
+    (metrics.grip + (100 - metrics.dirtyAir) + metrics.sectorTimes + (100 - metrics.fuelBurn)) / 4
+  )
+}
 
 function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
   if (trend === "up")
@@ -101,17 +130,36 @@ function getMetricColor(metric: string, value: number): string {
 
 export function GlobalComparison() {
   const { metrics: industryMetrics, industry } = useMissionControl()
+  const industryKey = getIndustryKey(industry)
   
-  // Sort by rank for display
-  const sortedCities = [...cities].sort((a, b) => a.rank - b.rank)
+  // Compute rankings based on current industry
+  const citiesWithScores = citiesData.map((city) => {
+    const data = city[industryKey]
+    return {
+      ...city,
+      metrics: data.metrics,
+      trends: data.trends,
+      overallScore: calculateOverallScore(data.metrics),
+    }
+  })
+
+  // Sort by overall score (descending) to determine ranks
+  const sortedCities = [...citiesWithScores].sort((a, b) => b.overallScore - a.overallScore)
+  const rankedCities = sortedCities.map((city, index) => ({
+    ...city,
+    rank: index + 1,
+  }))
 
   // Map metric keys to their labels from the current industry
   const getMetricLabel = (key: typeof metricKeys[number]): string => {
     return industryMetrics[key].label
   }
 
+  // Animation key for re-rendering on industry change
+  const animationKey = `comparison-${industry}`
+
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-xl border border-border bg-card" key={animationKey}>
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -152,9 +200,9 @@ export function GlobalComparison() {
             </tr>
           </thead>
           <tbody>
-            {sortedCities.map((city, index) => (
+            {rankedCities.map((city, index) => (
               <motion.tr
-                key={city.id}
+                key={`${city.id}-${industry}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -187,7 +235,7 @@ export function GlobalComparison() {
                   </div>
                 </td>
                 {metricKeys.map((metricKey) => (
-                    <td key={metricKey} className="px-4 py-4">
+                    <td key={`${metricKey}-${industry}`} className="px-4 py-4">
                       <div className="flex flex-col items-center gap-1">
                         <div className="flex items-center gap-1">
                           <span
@@ -202,6 +250,7 @@ export function GlobalComparison() {
                         </div>
                         <div className="h-1.5 w-16 overflow-hidden rounded-full bg-secondary">
                           <motion.div
+                            key={`bar-${city.id}-${metricKey}-${industry}`}
                             initial={{ width: 0 }}
                             animate={{ width: `${city.metrics[metricKey]}%` }}
                             transition={{ duration: 1, delay: index * 0.1 + 0.3 }}

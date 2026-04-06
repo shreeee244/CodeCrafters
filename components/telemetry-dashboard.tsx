@@ -26,85 +26,84 @@ import {
   Fuel,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useMissionControl } from "@/lib/mission-control-context"
+import { useMissionControl, type Industry } from "@/lib/mission-control-context"
 
 interface TelemetryDashboardProps {
   city: string
 }
 
-const cityData: Record<
-  string,
-  {
-    name: string
-    circuit: string
-    metrics: {
-      grip: number
-      dirtyAir: number
-      trackTemp: number
-      sectorTimes: number
-      fuelBurn: number
-    }
-    trends: {
-      grip: "up" | "down" | "stable"
-      dirtyAir: "up" | "down" | "stable"
-      trackTemp: "up" | "down" | "stable"
-      sectorTimes: "up" | "down" | "stable"
-      fuelBurn: "up" | "down" | "stable"
-    }
-  }
-> = {
+interface CityMetrics {
+  grip: number
+  dirtyAir: number
+  trackTemp: number
+  sectorTimes: number
+  fuelBurn: number
+}
+
+interface CityTrends {
+  grip: "up" | "down" | "stable"
+  dirtyAir: "up" | "down" | "stable"
+  trackTemp: "up" | "down" | "stable"
+  sectorTimes: "up" | "down" | "stable"
+  fuelBurn: "up" | "down" | "stable"
+}
+
+interface CityIndustryData {
+  name: string
+  circuit: string
+  fintech: { metrics: CityMetrics; trends: CityTrends }
+  healthtech: { metrics: CityMetrics; trends: CityTrends }
+  logistics: { metrics: CityMetrics; trends: CityTrends }
+}
+
+// City data mapped by BOTH city AND industry
+const cityData: Record<string, CityIndustryData> = {
   bangalore: {
     name: "Bangalore",
     circuit: "Electronic City GP",
-    metrics: {
-      grip: 85,
-      dirtyAir: 42,
-      trackTemp: 67,
-      sectorTimes: 78,
-      fuelBurn: 34,
+    fintech: {
+      metrics: { grip: 85, dirtyAir: 42, trackTemp: 67, sectorTimes: 78, fuelBurn: 34 },
+      trends: { grip: "up", dirtyAir: "down", trackTemp: "stable", sectorTimes: "up", fuelBurn: "down" },
     },
-    trends: {
-      grip: "up",
-      dirtyAir: "down",
-      trackTemp: "stable",
-      sectorTimes: "up",
-      fuelBurn: "down",
+    healthtech: {
+      metrics: { grip: 72, dirtyAir: 55, trackTemp: 78, sectorTimes: 68, fuelBurn: 45 },
+      trends: { grip: "stable", dirtyAir: "up", trackTemp: "up", sectorTimes: "up", fuelBurn: "stable" },
+    },
+    logistics: {
+      metrics: { grip: 88, dirtyAir: 38, trackTemp: 72, sectorTimes: 82, fuelBurn: 41 },
+      trends: { grip: "up", dirtyAir: "stable", trackTemp: "down", sectorTimes: "up", fuelBurn: "down" },
     },
   },
   mumbai: {
     name: "Mumbai",
     circuit: "Marine Drive Circuit",
-    metrics: {
-      grip: 72,
-      dirtyAir: 68,
-      trackTemp: 82,
-      sectorTimes: 65,
-      fuelBurn: 56,
+    fintech: {
+      metrics: { grip: 72, dirtyAir: 68, trackTemp: 82, sectorTimes: 65, fuelBurn: 56 },
+      trends: { grip: "stable", dirtyAir: "up", trackTemp: "up", sectorTimes: "down", fuelBurn: "up" },
     },
-    trends: {
-      grip: "stable",
-      dirtyAir: "up",
-      trackTemp: "up",
-      sectorTimes: "down",
-      fuelBurn: "up",
+    healthtech: {
+      metrics: { grip: 78, dirtyAir: 62, trackTemp: 75, sectorTimes: 71, fuelBurn: 52 },
+      trends: { grip: "up", dirtyAir: "stable", trackTemp: "stable", sectorTimes: "up", fuelBurn: "stable" },
+    },
+    logistics: {
+      metrics: { grip: 65, dirtyAir: 75, trackTemp: 88, sectorTimes: 58, fuelBurn: 68 },
+      trends: { grip: "down", dirtyAir: "up", trackTemp: "up", sectorTimes: "down", fuelBurn: "up" },
     },
   },
   chennai: {
     name: "Chennai",
     circuit: "Marina Beach Track",
-    metrics: {
-      grip: 91,
-      dirtyAir: 35,
-      trackTemp: 75,
-      sectorTimes: 88,
-      fuelBurn: 28,
+    fintech: {
+      metrics: { grip: 91, dirtyAir: 35, trackTemp: 75, sectorTimes: 88, fuelBurn: 28 },
+      trends: { grip: "up", dirtyAir: "stable", trackTemp: "down", sectorTimes: "up", fuelBurn: "down" },
     },
-    trends: {
-      grip: "up",
-      dirtyAir: "stable",
-      trackTemp: "down",
-      sectorTimes: "up",
-      fuelBurn: "down",
+    healthtech: {
+      metrics: { grip: 85, dirtyAir: 40, trackTemp: 82, sectorTimes: 79, fuelBurn: 38 },
+      trends: { grip: "up", dirtyAir: "down", trackTemp: "stable", sectorTimes: "up", fuelBurn: "down" },
+    },
+    logistics: {
+      metrics: { grip: 94, dirtyAir: 28, trackTemp: 70, sectorTimes: 91, fuelBurn: 25 },
+      trends: { grip: "up", dirtyAir: "down", trackTemp: "stable", sectorTimes: "up", fuelBurn: "down" },
     },
   },
 }
@@ -134,6 +133,16 @@ const industryIcons = {
   },
 }
 
+// Map Industry type to cityData key
+function getIndustryKey(industry: Industry): "fintech" | "healthtech" | "logistics" {
+  const map: Record<Industry, "fintech" | "healthtech" | "logistics"> = {
+    FinTech: "fintech",
+    HealthTech: "healthtech",
+    Logistics: "logistics",
+  }
+  return map[industry]
+}
+
 function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
   if (trend === "up")
     return <TrendingUp className="h-3 w-3 text-[oklch(0.7_0.2_145)]" />
@@ -143,9 +152,16 @@ function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
 }
 
 export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
-  const data = cityData[city] || cityData.bangalore
+  const cityInfo = cityData[city] || cityData.bangalore
   const { industry, metrics: industryMetrics, startupProfile } = useMissionControl()
   const icons = industryIcons[industry]
+  
+  // Get the correct data based on selected industry
+  const industryKey = getIndustryKey(industry)
+  const data = cityInfo[industryKey]
+
+  // Create a unique key for forcing gauge re-animation
+  const animationKey = `${city}-${industry}`
 
   return (
     <main className="flex-1 overflow-auto bg-background p-6 lg:p-8">
@@ -172,7 +188,7 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
             <p className="text-muted-foreground">
               Real-time {industry.toLowerCase()} intelligence for{" "}
               <span className="font-medium text-[oklch(0.8_0.18_195)]">
-                {data.circuit}
+                {cityInfo.circuit}
               </span>
             </p>
           </div>
@@ -183,9 +199,9 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
         </div>
       </header>
 
-      {/* Telemetry Grid - Dynamic Industry Metrics */}
+      {/* Telemetry Grid - Dynamic Industry Metrics with animation key */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <div className="relative">
+        <div className="relative" key={`grip-${animationKey}`}>
           <TelemetryGauge
             label={industryMetrics.grip.label}
             subLabel={industryMetrics.grip.subLabel}
@@ -199,7 +215,7 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative" key={`dirtyAir-${animationKey}`}>
           <TelemetryGauge
             label={industryMetrics.dirtyAir.label}
             subLabel={industryMetrics.dirtyAir.subLabel}
@@ -213,7 +229,7 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative" key={`trackTemp-${animationKey}`}>
           <TelemetryGauge
             label={industryMetrics.trackTemp.label}
             subLabel={industryMetrics.trackTemp.subLabel}
@@ -227,7 +243,7 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative" key={`sectorTimes-${animationKey}`}>
           <TelemetryGauge
             label={industryMetrics.sectorTimes.label}
             subLabel={industryMetrics.sectorTimes.subLabel}
@@ -241,7 +257,7 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
           </div>
         </div>
 
-        <div className="relative sm:col-span-2 lg:col-span-1">
+        <div className="relative sm:col-span-2 lg:col-span-1" key={`fuelBurn-${animationKey}`}>
           <TelemetryGauge
             label={industryMetrics.fuelBurn.label}
             subLabel={industryMetrics.fuelBurn.subLabel}
@@ -256,12 +272,12 @@ export function TelemetryDashboard({ city }: TelemetryDashboardProps) {
         </div>
       </div>
 
-      {/* Race Engineer's Report */}
-      <div className="mt-8">
+      {/* Race Engineer's Report - now also keyed for re-animation */}
+      <div className="mt-8" key={`report-${animationKey}`}>
         <RaceEngineerReport city={city} />
       </div>
 
-      {/* Summary Section */}
+      {/* Summary Section - now using industry-specific data */}
       <section className="mt-8 rounded-xl border border-border bg-card p-6">
         <h2 className="mb-4 text-lg font-semibold text-card-foreground">
           Market Summary

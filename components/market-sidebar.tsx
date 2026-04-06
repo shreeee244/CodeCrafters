@@ -35,7 +35,7 @@ export function MarketSidebar({ selectedCity, onCityChange }: MarketSidebarProps
   const currentCity = cities.find((c) => c.id === selectedCity) || cities[0]
 
   return (
-    <aside className="flex h-screen w-72 flex-col border-r border-border bg-sidebar">
+    <aside className="flex h-[calc(100vh-4rem)] w-72 flex-col border-r border-border bg-sidebar">
       {/* Logo */}
       <div className="flex items-center gap-3 border-b border-border p-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[oklch(0.8_0.18_195/0.15)]">
@@ -43,7 +43,7 @@ export function MarketSidebar({ selectedCity, onCityChange }: MarketSidebarProps
         </div>
         <div>
           <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">
-            MarketPrix
+            FinTech Telemetry
           </h1>
           <p className="text-xs text-muted-foreground">Market Intelligence</p>
         </div>

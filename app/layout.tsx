@@ -1,15 +1,18 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/lib/auth-context'
+import { Navbar } from '@/components/navbar'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'MarketPrix - F1-Inspired Market Intelligence',
-  description: 'Real-time market telemetry dashboard with F1-inspired analytics for Bangalore, Mumbai, and Chennai markets.',
+  title: 'MarketPrix - F1-Inspired FinTech Market Intelligence',
+  description: 'Real-time FinTech market telemetry dashboard with F1-inspired analytics for Bangalore, Mumbai, and Chennai markets. Track transaction volume, competition, and growth metrics.',
   generator: 'v0.app',
+  keywords: ['FinTech', 'Market Intelligence', 'Dashboard', 'Analytics', 'India'],
   icons: {
     icon: [
       {
@@ -29,6 +32,12 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,7 +46,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased dark">
-        {children}
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
